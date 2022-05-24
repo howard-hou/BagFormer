@@ -252,6 +252,11 @@ class VisionTransformer(nn.Module):
         x = self.transformer(x)
         x = x.permute(1, 0, 2)  # LND -> NLD
 
+        x = self.ln_post(x)
+
+        if self.proj is not None:
+            x = x @ self.proj
+
         return x
 
 
@@ -381,6 +386,9 @@ class CLIP(nn.Module):
         x = self.transformer(x)
         x = x.permute(1, 0, 2)  # LND -> NLD
         x = self.ln_final(x).type(self.dtype)
+
+        # x.shape = [batch_size, n_ctx, transformer.width]
+        x = x @ self.text_projection
 
         return x
 
