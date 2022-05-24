@@ -15,6 +15,6 @@ with torch.no_grad():
     image_features = model.encode_image_full(image)
     text_features = model.encode_text_full(text)
 
-print("image feature shape:", image_features.shape)  # prints: torch.Size([1, 50, 768])
+print("image feature shape:", image_features.shape)  # prints: torch.Size([1, 50, 512])
 print("text feature shape:", text_features.shape)  # prints: torch.Size([3, 77, 512])
 ```
