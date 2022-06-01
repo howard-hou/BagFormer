@@ -1,5 +1,6 @@
 # BagFormer
 simple modification for the CLIP code, to get all the visual and textual token from model
+## CLIP way: CLS token similarity
 ```python
 import torch
 import clip
@@ -21,7 +22,7 @@ with torch.no_grad():
 
 print("Label probs:", probs)
 ```
-# token-wise similarity
+## token-wise similarity
 ```python
 import torch
 import clip
