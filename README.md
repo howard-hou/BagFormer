@@ -44,8 +44,8 @@ print("text feature shape:", text_features.shape)  # prints: torch.Size([3, 77, 
 print("Label probs:", probs)
 ```
 
-```python
 # BagFormer way to calculate similarity
+```python
 import clip
 import torch
 import torch.nn.functional as F
