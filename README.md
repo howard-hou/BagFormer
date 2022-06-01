@@ -8,7 +8,7 @@ from PIL import Image
 device = "cuda" if torch.cuda.is_available() else "cpu"
 model, preprocess = clip.load("ViT-B/32", device=device)
 
-image = preprocess(Image.open("CLIP.png")).unsqueeze(0).to(device)
+image = preprocess(Image.open("corgi.webp")).unsqueeze(0).to(device)
 text = clip.tokenize(["a diagram", "a dog", "a cat"]).to(device)
 
 # CLIP way to calculate similarity
@@ -20,9 +20,19 @@ with torch.no_grad():
     probs = logits_per_image.softmax(dim=-1).cpu().numpy()
 
 print("Label probs:", probs)
-
+```
 # token-wise similarity
+```python
+import torch
+import clip
+from PIL import Image
 from bagformer.model_helper import tokenwise_similarity
+
+device = "cuda" if torch.cuda.is_available() else "cpu"
+model, preprocess = clip.load("ViT-B/32", device=device)
+
+image = preprocess(Image.open("corgi.webp")).unsqueeze(0).to(device)
+text = clip.tokenize(["a diagram", "a dog", "a cat"]).to(device)
 with torch.no_grad():
     image_features = model.encode_image_full(image)
     text_features = model.encode_text_full(text)
@@ -32,14 +42,24 @@ with torch.no_grad():
 print("image feature shape:", image_features.shape)  # prints: torch.Size([1, 50, 512])
 print("text feature shape:", text_features.shape)  # prints: torch.Size([3, 77, 512])
 print("Label probs:", probs)
+```
 
+```python
 # BagFormer way to calculate similarity
+import clip
+import torch
 import torch.nn.functional as F
-from bagformer.model_helper import tokenwise_similarity, EmbeddingBagHelper
+from PIL import Image
 from transformers import BertTokenizer
+from bagformer.model_helper import tokenwise_similarity, EmbeddingBagHelper
+
+device = "cuda" if torch.cuda.is_available() else "cpu"
+model, preprocess = clip.load("ViT-B/32", device=device)
+image = preprocess(Image.open("corgi.webp")).unsqueeze(0).to(device)
+
 tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
 embedding_bag_helper = EmbeddingBagHelper(tokenizer, "vocab/demo")
-max_seq_len = 10
+max_seq_len = 77
 category = ["a diagram", "a dog", "a cat", "a corgi"]
 text = tokenizer(category, padding='max_length', max_length=max_seq_len)
 embed_bag_offset, attn_mask = embedding_bag_helper.process(text, return_mask=True)
@@ -67,6 +87,4 @@ with torch.no_grad():
 print("image feature shape:", image_features.shape)  # prints: torch.Size([1, 50, 512])
 print("text feature shape:", embedbag_feats.shape)  # prints: torch.Size([3, 77, 512])
 print("Label probs:", probs)  # prints: [[0.9927937  0.00421068 0.00299572]]
-
-
 ```
