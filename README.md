@@ -86,6 +86,6 @@ with torch.no_grad():
     probs = logits_per_image.softmax(dim=-1).cpu().numpy()
     
 print("image feature shape:", image_features.shape)  # prints: torch.Size([1, 50, 512])
-print("text feature shape:", embedbag_feats.shape)  # prints: torch.Size([3, 77, 512])
-print("Label probs:", probs)  # prints: [[0.9927937  0.00421068 0.00299572]]
+print("text feature shape:", embedbag_feats.shape)  # prints: torch.Size([4, 77, 512])
+print("Label probs:", probs)  # prints: [0.04407 0.02673 0.04407 0.8853 ]
 ```
