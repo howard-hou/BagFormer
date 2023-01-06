@@ -153,3 +153,5 @@ cython_debug/
 .idea/other.xml
 .idea
 .data
+data/
+.DS_Store
