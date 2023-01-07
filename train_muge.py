@@ -64,7 +64,7 @@ def train(model, data_loader, optimizer, tokenizer, epoch, warmup_steps, device,
         else:
             alpha = config['alpha'] * min(1, i / len(data_loader))
 
-        if config['interaction'] == "bagwise":
+        if args.interaction == "bagwise":
             losses = model(image, text_input, embed_bag_input, alpha=alpha, idx=idx, config=config)
         else:
             losses = model(image, text_input, alpha=alpha, idx=idx)
@@ -127,13 +127,13 @@ def evaluation(model, data_loader, tokenizer, device, config, embedding_bag_help
     image_embeds, image_feats = encode_all_image(data_loader, model, device)
 
     # calc_sim_martix, recall
-    if config['interaction'] == "cls_token":
+    if args.interaction == "cls_token":
         text_cls_embeds = text_embeds[:, 0, :]
         image_cls_embeds = image_embeds[:, 0, :]
         sim_i2t, sim_t2i = cls_token_similarity(image_cls_embeds, text_cls_embeds)
-    elif config['interaction'] == "tokenwise":
+    elif args.interaction == "tokenwise":
         sim_i2t, sim_t2i = tokenwise_similarity_martix(text_embeds, image_embeds)
-    elif config['interaction'] == "bagwise":
+    elif args.interaction == "bagwise":
         text_embedbag_embeds = aggregate_embedbag(texts, text_feats, model, tokenizer,
                                                   embedding_bag_helper,
                                                   config["batch_size_test"])
@@ -373,13 +373,13 @@ def main(args, config):
 
     #### Model #### 
     print("Creating model")
-    if config['interaction'] == "cls_token":
+    if args.interaction == "cls_token":
         model = ALBEF(config=config, text_encoder=args.text_encoder, tokenizer=tokenizer)
         print("create ALBEF cls token model")
-    elif config['interaction'] == "tokenwise":
+    elif args.interaction == "tokenwise":
         model = ALBEF_tokenwise(config=config, text_encoder=args.text_encoder, tokenizer=tokenizer)
         print("create ALBEF_tokenwise model")
-    elif config['interaction'] == "bagwise":
+    elif args.interaction == "bagwise":
         model = BagFormer(config=config, text_encoder=args.text_encoder, tokenizer=tokenizer)
         print("create BagFormer model")
     else:

@@ -8,8 +8,8 @@ dataset: 'multimodal_retrieval'
 bert_config: 'configs/config_chinese_bert.json'
 
 image_res: 256
-batch_size_train: 16
-batch_size_test: 32
+batch_size_train: 32
+batch_size_test: 64
 num_workers_train: 4
 num_workers_test: 0
 
