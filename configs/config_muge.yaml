@@ -20,8 +20,6 @@ embed_dim: 256
 
 temp: 0.07
 k_test: 256
-model: embedbag
-similarity_metric: embedbag_similarity
 fusion_strategy: late_fusion
 entity_dict_path: vocab/entity_dict_20220507
 

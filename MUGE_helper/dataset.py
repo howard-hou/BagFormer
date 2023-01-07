@@ -5,43 +5,8 @@ from torchvision import transforms
 from PIL import Image
 from pathlib import Path
 from collections import defaultdict
-from dataset.randaugment import RandomAugment
-from .dataset_helper import load_query_file, load_item_id2image, load_img_from_text, load_classification_file
-
-
-class ProductRelevanceDataset(data.Dataset):
-    """
-    Dataset loader for product_relevance datasets.
-    """
-
-    def __init__(self, query_file, image_file, transform=None):
-        self.transform = transform
-        self.ground_truth = load_classification_file(query_file)
-        self.item_id2image = load_item_id2image(image_file, dtype="str")
-        self.prepare_data()
-
-    def prepare_data(self):
-        self.img_text_pair = []
-        for j in self.ground_truth:
-            text = j["query_text"]
-            skuid = j["skuid"]
-            if skuid not in self.item_id2image:
-                continue
-            img = self.item_id2image[skuid]
-            label = j["relevance"]
-            self.img_text_pair.append((skuid, img, text, label))
-
-    def __getitem__(self, index):
-        """This function returns a tuple that is further passed to collate_fn
-        """
-        skuid, img, text, label = self.img_text_pair[index]
-        img = load_img_from_text(img)
-        if self.transform is not None:
-            img = self.transform(img)
-        return skuid, img, text, label
-
-    def __len__(self):
-        return len(self.img_text_pair)
+from transform.randaugment import RandomAugment
+from .dataset_helper import load_query_file, load_item_id2image, load_img_from_text
 
 
 class MultimodalRetrievalDataset(data.Dataset):
@@ -140,8 +105,6 @@ class MultimodalRetrievalDataset(data.Dataset):
 
 
 normalize = transforms.Normalize((0.48145466, 0.4578275, 0.40821073), (0.26862954, 0.26130258, 0.27577711))
-
-
 def get_train_transform(config):
     train_transform = transforms.Compose([
         transforms.RandomResizedCrop(config['image_res'], scale=(0.5, 1.0), interpolation=Image.BICUBIC),
@@ -163,68 +126,39 @@ def get_test_transform(config):
     return test_transform
 
 
-def get_visualization_transform(image_res):
-    visual_transform = transforms.Compose([
-        transforms.Resize((image_res, image_res), interpolation=Image.BICUBIC),
-        transforms.ToTensor(),
-        normalize,
-    ])
-    return visual_transform
-
-
 def create_dataloader(dataset, config, load_train=True):
     train_transform = get_train_transform(config)
 
     test_transform = get_test_transform(config)
 
-    if dataset == 'multimodal_retrieval':
-        if load_train:
-            train_dataset = MultimodalRetrievalDataset(config['train_query_file'],
-                                                       config['train_image_file'],
-                                                       split='train', dtype="int",
-                                                       transform=train_transform)
-            train_dataloader = data.DataLoader(train_dataset, batch_size=config["batch_size_train"],
-                                               num_workers=config["num_workers_train"], shuffle=True,
-                                               pin_memory=False, drop_last=True)
-            print("train dataset is loaded")
-        else:
-            train_dataloader = None
-            print("train dataset is not loaded")
-
-        val_dataset = MultimodalRetrievalDataset(config['valid_query_file'],
-                                                 config['valid_image_file'],
-                                                 split='valid', dtype="int",
-                                                 transform=test_transform)
-        test_dataset = MultimodalRetrievalDataset(config['test_query_file'],
-                                                  config['test_image_file'],
-                                                  split='test', dtype="int",
-                                                  transform=test_transform)
-        val_dataloader = data.DataLoader(val_dataset, batch_size=config["batch_size_test"],
-                                         num_workers=config["num_workers_test"], shuffle=False,
-                                         pin_memory=False)
-        test_dataloader = data.DataLoader(test_dataset, batch_size=config["batch_size_test"],
-                                          num_workers=config["num_workers_test"], shuffle=False,
-                                          pin_memory=False)
-        return train_dataloader, val_dataloader, test_dataloader
-    elif dataset == "product_relevance":
-        train_dataset = ProductRelevanceDataset(config["train_query_file"],
-                                                config["train_image_file"],
+    if load_train:
+        train_dataset = MultimodalRetrievalDataset(config['train_query_file'],
+                                                config['train_image_file'],
+                                                split='train', dtype="int",
                                                 transform=train_transform)
         train_dataloader = data.DataLoader(train_dataset, batch_size=config["batch_size_train"],
-                                           num_workers=config["num_workers_test"], shuffle=True,
-                                           pin_memory=False)
-        val_dataloader_list = []
-        for query_file, image_file in zip(config["test_query_file"], config["test_image_file"]):
-            val_dataset = ProductRelevanceDataset(query_file,
-                                                  image_file,
-                                                  transform=test_transform)
-            val_dataloader = data.DataLoader(val_dataset, batch_size=config["batch_size_test"],
-                                             num_workers=config["num_workers_test"], shuffle=False,
-                                             pin_memory=False)
-            val_dataloader_list.append(val_dataloader)
-        return train_dataloader, val_dataloader_list, None
+                                        num_workers=config["num_workers_train"], shuffle=True,
+                                        pin_memory=False, drop_last=True)
+        print("train dataset is loaded")
     else:
-        raise "wrong dataset name"
+        train_dataloader = None
+        print("train dataset is not loaded")
+
+    val_dataset = MultimodalRetrievalDataset(config['valid_query_file'],
+                                            config['valid_image_file'],
+                                            split='valid', dtype="int",
+                                            transform=test_transform)
+    test_dataset = MultimodalRetrievalDataset(config['test_query_file'],
+                                            config['test_image_file'],
+                                            split='test', dtype="int",
+                                            transform=test_transform)
+    val_dataloader = data.DataLoader(val_dataset, batch_size=config["batch_size_test"],
+                                    num_workers=config["num_workers_test"], shuffle=False,
+                                    pin_memory=False)
+    test_dataloader = data.DataLoader(test_dataset, batch_size=config["batch_size_test"],
+                                    num_workers=config["num_workers_test"], shuffle=False,
+                                    pin_memory=False)
+    return train_dataloader, val_dataloader, test_dataloader
 
 
 def create_one_dataloader(query_file, image_file, split, config):

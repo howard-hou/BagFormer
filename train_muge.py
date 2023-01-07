@@ -20,8 +20,7 @@ from torch.utils.data import DataLoader
 
 from models.model_retrieval import ALBEF
 from models.model_retrieval_tokenwise import ALBEF_tokenwise
-from models.model_retrieval_ngramwise import ALBEF_ngramwise
-from models.model_retrieval_embedbag import ALBEF_embedbag
+from models.model_retrieval_bagwise import BagFormer
 from models.loss import tokenwise_similarity_martix
 from models.vit import interpolate_pos_embed
 from models.tokenization_bert import BertTokenizer
@@ -65,7 +64,7 @@ def train(model, data_loader, optimizer, tokenizer, epoch, warmup_steps, device,
         else:
             alpha = config['alpha'] * min(1, i / len(data_loader))
 
-        if config['model'] == "embedbag":
+        if config['interaction'] == "bagwise":
             losses = model(image, text_input, embed_bag_input, alpha=alpha, idx=idx, config=config)
         else:
             losses = model(image, text_input, alpha=alpha, idx=idx)
@@ -128,22 +127,19 @@ def evaluation(model, data_loader, tokenizer, device, config, embedding_bag_help
     image_embeds, image_feats = encode_all_image(data_loader, model, device)
 
     # calc_sim_martix, recall
-    if config['similarity_metric'] == "ngramwise_similarity":
-        ngram_seq_embeds = aggregate_ngram(text_embeds, model, config["batch_size_test"])
-        sim_i2t, sim_t2i = tokenwise_similarity_martix(ngram_seq_embeds, image_embeds)
-    elif config['similarity_metric'] == "cls_token_similarity":
+    if config['interaction'] == "cls_token":
         text_cls_embeds = text_embeds[:, 0, :]
         image_cls_embeds = image_embeds[:, 0, :]
         sim_i2t, sim_t2i = cls_token_similarity(image_cls_embeds, text_cls_embeds)
-    elif config['similarity_metric'] == "tokenwise_similarity":
+    elif config['interaction'] == "tokenwise":
         sim_i2t, sim_t2i = tokenwise_similarity_martix(text_embeds, image_embeds)
-    elif config['similarity_metric'] == "embedbag_similarity":
+    elif config['interaction'] == "bagwise":
         text_embedbag_embeds = aggregate_embedbag(texts, text_feats, model, tokenizer,
                                                   embedding_bag_helper,
                                                   config["batch_size_test"])
         sim_i2t, sim_t2i = tokenwise_similarity_martix(text_embedbag_embeds, image_embeds)
     else:
-        raise f"similarity_metric must be in [ngramwise_similarity, tokenwise_similarity, cls_token_similarity]"
+        raise f"model must be in [cls_token, tokenwise, bagwise]"
 
     rank_matrix_i2t = torch.full((len(data_loader.dataset.imgs), len(texts)), -100.0).to(device)
     merge_matrix_i2t = torch.full((len(data_loader.dataset.imgs), len(texts)), -100.0).to(device)
@@ -342,26 +338,6 @@ def cls_token_similarity(image_embeds, text_embeds):
     return sim_i2t, sim_t2i
 
 
-def ngramwise_similarity(text_embeds, image_embeds):
-    """consider text with ngram feats, image with token feats"""
-    num_text, num_ngram = text_embeds.shape[:2]
-    num_image = image_embeds.shape[0]
-    device = text_embeds.device
-    sim_i2t = torch.zeros((num_image, num_text), device=device)
-    for i in range(num_image):
-        sim_i2t[i] = (image_embeds[i] @ text_embeds.permute(0, 1, 3, 2)).max(1).values.max(1).values.sum(1)
-
-    sim_t2i = torch.zeros((num_text, num_image), device=device)
-    for i in range(num_text):
-        ngram_list = []
-        for j in range(num_ngram):
-            ngram = (text_embeds[i][j] @ image_embeds.permute(0, 2, 1))
-            ngram_list.append(ngram.unsqueeze(-1))
-        ngram_sim_matrix = torch.cat(ngram_list, dim=-1).permute(0, 3, 1, 2)  # (N, ngram, seq, seq)
-        sim_t2i[i] = ngram_sim_matrix.max(1).values.max(1).values.sum(1)
-    return sim_i2t, sim_t2i
-
-
 def output_prediction(test_eval_dict, test_loader, key):
     pred_list = t2i_pred(test_eval_dict[key], test_loader.dataset.texts,
                          test_loader.dataset.img_idx2img_id)
@@ -385,7 +361,7 @@ def main(args, config):
     cudnn.benchmark = True
 
     #### Dataset #### 
-    print("Creating retrieval dataset")
+    print("Creating muge retrieval dataset")
 
     train_loader, val_loader, test_loader = create_dataloader('multimodal_retrieval',
                                                               config)
@@ -397,20 +373,17 @@ def main(args, config):
 
     #### Model #### 
     print("Creating model")
-    if config['model'] == "ngramwise":
-        model = ALBEF_ngramwise(config=config, text_encoder=args.text_encoder, tokenizer=tokenizer)
-        print("create ALBEF_ngramwise model")
-    elif config['model'] == "cls_token":
+    if config['interaction'] == "cls_token":
         model = ALBEF(config=config, text_encoder=args.text_encoder, tokenizer=tokenizer)
         print("create ALBEF cls token model")
-    elif config['model'] == "tokenwise":
+    elif config['interaction'] == "tokenwise":
         model = ALBEF_tokenwise(config=config, text_encoder=args.text_encoder, tokenizer=tokenizer)
         print("create ALBEF_tokenwise model")
-    elif config['model'] == "embedbag":
-        model = ALBEF_embedbag(config=config, text_encoder=args.text_encoder, tokenizer=tokenizer)
-        print("create ALBEF_embedbag model")
+    elif config['interaction'] == "bagwise":
+        model = BagFormer(config=config, text_encoder=args.text_encoder, tokenizer=tokenizer)
+        print("create BagFormer model")
     else:
-        raise f"similarity_metric must be in [ngramwise, tokenwise, cls_token, embedbag]"
+        raise f"similarity_metric must be in [cls_token, tokenwise, bagwise]"
 
     if args.checkpoint:
         checkpoint = torch.load(args.checkpoint, map_location='cpu')
@@ -546,16 +519,14 @@ def main(args, config):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', default='./configs/Retrieval_flickr.yaml')
-    parser.add_argument('--output_dir', default='output/Retrieval_flickr')
-    parser.add_argument('--checkpoint', default='')
-    parser.add_argument('--text_encoder', default='bert-base-uncased')
+    parser.add_argument('--config', default='configs/config_muge.yaml')
+    parser.add_argument('--output_dir', default='output/retrieval_muge')
+    parser.add_argument('--checkpoint', default='pretrained_model/pretrained_checkpoint.pth')
+    parser.add_argument('--text_encoder', default='bert-base-chinese')
+    parser.add_argument('--interaction', default='bagwise')
     parser.add_argument('--evaluate', action='store_true')
     parser.add_argument('--device', default='cuda')
     parser.add_argument('--seed', default=42, type=int)
-    parser.add_argument('--world_size', default=1, type=int, help='number of distributed processes')
-    parser.add_argument('--dist_url', default='env://', help='url used to set up distributed training')
-    parser.add_argument('--distributed', default=False, type=bool)
     args = parser.parse_args()
 
     config = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
@@ -563,6 +534,5 @@ if __name__ == '__main__':
     Path(args.output_dir).mkdir(parents=True, exist_ok=True)
 
     yaml.dump(config, open(os.path.join(args.output_dir, 'config.yaml'), 'w'))
-    shutil.copy("start.sh", os.path.join(args.output_dir, 'start.sh'))
 
     main(args, config)

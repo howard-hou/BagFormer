@@ -8,7 +8,7 @@ from torch import nn
 import torch.nn.functional as F
 
 
-class ALBEF_embedbag(nn.Module):
+class BagFormer(nn.Module):
     def __init__(self,
                  text_encoder=None,
                  tokenizer=None,

@@ -2,4 +2,6 @@ torch==1.13.1
 torchvision==0.14.1
 timm==0.4.9
 transformers==4.8.1
+ruamel.yaml
+opencv-python
 
