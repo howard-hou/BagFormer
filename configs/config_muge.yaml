@@ -1,9 +1,9 @@
-train_query_file: '/apdcephfs/private_howardhwhou/cv_datasets/MUGE/Multimodal_Retrieval/MR_train_queries.jsonl'
-train_image_file: '/apdcephfs/private_howardhwhou/cv_datasets/MUGE/Multimodal_Retrieval/MR_train_imgs.tsv'
-valid_query_file: '/apdcephfs/private_howardhwhou/cv_datasets/MUGE/Multimodal_Retrieval/MR_valid_queries.jsonl'
-valid_image_file: '/apdcephfs/private_howardhwhou/cv_datasets/MUGE/Multimodal_Retrieval/MR_valid_imgs.tsv'
-test_query_file: '/apdcephfs/private_howardhwhou/cv_datasets/MUGE/Multimodal_Retrieval/MR_test_queries.jsonl'
-test_image_file: '/apdcephfs/private_howardhwhou/cv_datasets/MUGE/Multimodal_Retrieval/MR_test_imgs.tsv'
+train_query_file: 'data/Multimodal_Retrieval/MR_train_queries.jsonl'
+train_image_file: 'data/Multimodal_Retrieval/MR_train_imgs.tsv'
+valid_query_file: 'data/Multimodal_Retrieval/MR_valid_queries.jsonl'
+valid_image_file: 'data/Multimodal_Retrieval/MR_valid_imgs.tsv'
+test_query_file: 'data/Multimodal_Retrieval/MR_test_queries.jsonl'
+test_image_file: 'data/Multimodal_Retrieval/MR_test_imgs.tsv'
 dataset: 'multimodal_retrieval'
 bert_config: 'configs/config_chinese_bert.json'
 
@@ -23,7 +23,7 @@ k_test: 256
 model: embedbag
 similarity_metric: embedbag_similarity
 fusion_strategy: late_fusion
-entity_dict_path: meta_data/entity_dict_20220507
+entity_dict_path: vocab/entity_dict_20220507
 
 alpha: 0.0
 distill: False
