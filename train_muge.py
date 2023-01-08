@@ -533,21 +533,20 @@ def main(args, config):
                 val_loader.dataset.txt2img,
                 val_loader.dataset.img2txt,
             )
-            
+
             rank_val_result = itm_eval(
                 eval_dict["rank_i2t"],
                 eval_dict["rank_t2i"],
                 val_loader.dataset.txt2img,
                 val_loader.dataset.img2txt,
             )
-            
+
             merge_val_result = itm_eval(
                 eval_dict["merge_i2t"],
                 eval_dict["merge_t2i"],
                 val_loader.dataset.txt2img,
                 val_loader.dataset.img2txt,
             )
-            
 
             if args.evaluate:
                 log_stats = {

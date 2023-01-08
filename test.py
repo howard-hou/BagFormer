@@ -1,35 +1,3 @@
-# BagFormer: Better Cross-Modal Retrieval via bag-wise interaction
-
-<img src="BagFormer.png" width="700">
-
-This is the PyTorch code of the <a href="https://arxiv.org/abs/2212.14322">BagFormer paper</a>. The code has been tested on Python 3.8 and PyTorch 1.13.
-To install the dependencies, please create a virtual environment and run 
-<pre/>pip install -r requirements.txt</pre> 
-
-### Pre-trained checkpoints:
-num of image-text pairs | BagFormer
-:---: | :---:  
-108M | <a href="https://storage.googleapis.com/sfr-vision-language-research/BLIP/models/model_base.pth">Download</a>
-
-### Finetuned checkpoints:
-Task | BagFormer 
-:---: | :---: 
-Image-Text Retrieval (MUGE) | <a href="https://storage.googleapis.com/sfr-vision-language-research/BLIP/models/model_base_retrieval_coco.pth">Download</a>
-
-### Image-Text Retrieval:
-1. Download MUGE Multimodal Retrieval dataset from the original <a herf="https://tianchi.aliyun.com/dataset/107332">website</a>, and unzip file to data directory, or modify the path in configs/config_muge.yaml.
-2. To evaluate the finetuned BagFormer model on MUGE, run:
-<pre>python -m torch.distributed.run --nproc_per_node=8 train_retrieval.py \
---config ./configs/retrieval_coco.yaml \
---output_dir output/retrieval_coco \
---evaluate</pre> 
-1. To finetune the pre-trained checkpoint using 8 A100 GPUs, first set 'pretrained' in configs/retrieval_coco.yaml as "https://storage.googleapis.com/sfr-vision-language-research/BLIP/models/model_base.pth". Then run:
-<pre>python -m torch.distributed.run --nproc_per_node=8 train_retrieval.py \
---config ./configs/retrieval_coco.yaml \
---output_dir output/retrieval_coco </pre> 
-
-### Calculate bag-wise similarity
-```python
 import torch
 import torch.nn.functional as F
 from PIL import Image
@@ -98,5 +66,5 @@ with torch.no_grad():
     
 print("image feature shape:", image_features.shape)  # prints: torch.Size([1, 50, 512])
 print("text feature shape:", embedbag_feats.shape)  # prints: torch.Size([4, 77, 512])
-print("Label probs:", probs)  # prints: [0.04407 0.02673 0.04407 0.8853 ]
-```
+print("img2text sim:", sim_i2t)  # prints: [0.04407 0.02673 0.04407 0.8853 ]
+print("text2img sim:", sim_t2i)  # prints: [0.04407 0.02673 0.04407 0.8853 ]
