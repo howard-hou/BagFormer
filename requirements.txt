@@ -4,4 +4,4 @@ timm==0.4.9
 transformers==4.8.1
 ruamel.yaml
 opencv-python
-
+pyahocorasick
