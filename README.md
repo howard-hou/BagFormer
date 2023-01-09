@@ -9,7 +9,7 @@ To install the dependencies, please create a virtual environment and run
 ### Pre-trained checkpoints:
 num of image-text pairs | BagFormer
 :---: | :---:  
-108M | <a href="https://storage.googleapis.com/sfr-vision-language-research/BLIP/models/model_base.pth">Download</a>
+108M | <a href="https://drive.google.com/file/d/1z4CFDsCza-7FSb60WvXcyepfCaAUuNp3/view?usp=sharing">Download</a>
 
 ### Finetuned checkpoints:
 Task | BagFormer 
@@ -19,14 +19,17 @@ Image-Text Retrieval (MUGE) | <a href="https://storage.googleapis.com/sfr-vision
 ### Image-Text Retrieval:
 1. Download MUGE Multimodal Retrieval dataset from the original <a herf="https://tianchi.aliyun.com/dataset/107332">website</a>, and unzip file to data directory, or modify the path in configs/config_muge.yaml.
 2. To evaluate the finetuned BagFormer model on MUGE, run:
-<pre>python -m torch.distributed.run --nproc_per_node=8 train_retrieval.py \
---config ./configs/retrieval_coco.yaml \
---output_dir output/retrieval_coco \
+<pre>python3 train_muge.py \
+--checkpoint path-to-checkpoint \
+--interaction bagwise \
+--output_dir path-to-output \
 --evaluate</pre> 
-1. To finetune the pre-trained checkpoint using 8 A100 GPUs, first set 'pretrained' in configs/retrieval_coco.yaml as "https://storage.googleapis.com/sfr-vision-language-research/BLIP/models/model_base.pth". Then run:
-<pre>python -m torch.distributed.run --nproc_per_node=8 train_retrieval.py \
---config ./configs/retrieval_coco.yaml \
---output_dir output/retrieval_coco </pre> 
+
+3. To finetune the pre-trained checkpoint. Then run:
+<pre>python3 train_muge.py \
+--checkpoint path-to-checkpoint \
+--interaction bagwise \
+--output_dir path-to-output </pre> 
 
 ### Calculate bag-wise similarity
 ```python

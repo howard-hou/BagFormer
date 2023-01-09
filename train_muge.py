@@ -487,19 +487,30 @@ def main(args, config):
         )
         model_without_ddp = model.module
 
+    # init optimizer and scheduler
     arg_opt = utils.AttrDict(config["optimizer"])
     optimizer = create_optimizer(arg_opt, model)
     arg_sche = utils.AttrDict(config["schedular"])
     lr_scheduler, _ = create_scheduler(arg_sche, optimizer)
 
+    start_epoch = 0
     max_epoch = config["schedular"]["epochs"]
     warmup_steps = config["schedular"]["warmup_epochs"]
     best = 0
     best_epoch = 0
+    # set optimizer and scheduler if resume
+    if args.resume:
+        try:
+            optimizer.load_state_dict(checkpoint["optimizer"])
+        except:
+            print("can not load optimizer state dict, use init optimizer")
+        lr_scheduler.load_state_dict(checkpoint["lr_scheduler"])
+        start_epoch = checkpoint["epoch"] + 1
+        print(f"resume mode: optimizer loaded, scheduler loaded")
 
     print("Start training")
     start_time = time.time()
-    for epoch in range(0, max_epoch):
+    for epoch in range(start_epoch, max_epoch):
         if not args.evaluate:
             if args.distributed:
                 train_loader.sampler.set_epoch(epoch)
@@ -564,7 +575,7 @@ def main(args, config):
                     "epoch": epoch,
                 }
                 with open(
-                    os.path.join(args.output_dir, "log.txt"), "a", encoding="utf-8"
+                    os.path.join(args.output_dir, "eval.log"), "a", encoding="utf-8"
                 ) as f:
                     f.write(f"evaluate start\n")
                     f.write(json.dumps(log_stats) + "\n")
@@ -585,7 +596,7 @@ def main(args, config):
                     "epoch": epoch,
                 }
                 with open(
-                    os.path.join(args.output_dir, "log.txt"), "a", encoding="utf-8"
+                    os.path.join(args.output_dir, "train.log"), "a", encoding="utf-8"
                 ) as f:
                     f.write(json.dumps(log_stats) + "\n")
 
@@ -614,20 +625,29 @@ def main(args, config):
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
     print("Training time {}".format(total_time_str))
 
-    if utils.is_main_process():
-        with open(os.path.join(args.output_dir, "log.txt"), "a", encoding="utf-8") as f:
+    if utils.is_main_process() and not args.evaluate:
+        with open(
+            os.path.join(args.output_dir, "train.log"), "a", encoding="utf-8"
+        ) as f:
             f.write("best epoch: %d" % best_epoch + "\n")
 
-    print(f"{datetime.datetime.now()}, Start testing")
-    if not args.evaluate:
-        ckpt = torch.load(best_model_path)
-        model_without_ddp.load_state_dict(ckpt["model"])
-    test_eval_dict = evaluation(
-        model_without_ddp, test_loader, tokenizer, device, config, embedding_bag_helper
-    )
-    output_prediction(test_eval_dict, test_loader, "merge_t2i")
-    output_prediction(test_eval_dict, test_loader, "recall_t2i")
-    output_prediction(test_eval_dict, test_loader, "rank_t2i")
+    if args.testing:
+        print(f"{datetime.datetime.now()}, Start testing")
+        if not args.evaluate:
+            ckpt = torch.load(best_model_path)
+            model_without_ddp.load_state_dict(ckpt["model"])
+
+        test_eval_dict = evaluation(
+            model_without_ddp,
+            test_loader,
+            tokenizer,
+            device,
+            config,
+            embedding_bag_helper,
+        )
+        output_prediction(test_eval_dict, test_loader, "merge_t2i")
+        output_prediction(test_eval_dict, test_loader, "recall_t2i")
+        output_prediction(test_eval_dict, test_loader, "rank_t2i")
 
 
 if __name__ == "__main__":
@@ -640,6 +660,8 @@ if __name__ == "__main__":
     parser.add_argument("--text_encoder", default="bert-base-chinese")
     parser.add_argument("--interaction", default="bagwise")
     parser.add_argument("--evaluate", action="store_true")
+    parser.add_argument("--testing", action="store_true")
+    parser.add_argument("--resume", action="store_true")
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--seed", default=42, type=int)
     args = parser.parse_args()
