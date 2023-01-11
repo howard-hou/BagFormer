@@ -115,7 +115,7 @@ def train(
     metric_logger.synchronize_between_processes()
     print("Averaged stats:", metric_logger.global_avg())
     return {
-        k: "{:.6f}".format(meter.global_avg)
+        k: "{:.7f}".format(meter.global_avg)
         for k, meter in metric_logger.meters.items()
     }
 

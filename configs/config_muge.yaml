@@ -28,7 +28,7 @@ distill: False
 warm_up: True
 
 optimizer: {opt: adamW, lr: 1e-5, weight_decay: 0.02}
-schedular: {sched: cosine, lr: 1e-5, epochs: 30, min_lr: 1e-6, decay_rate: 1, warmup_lr: 1e-5, warmup_epochs: 1, cooldown_epochs: 0}
+schedular: {sched: cosine, lr: 1e-5, epochs: 6, min_lr: 0, decay_rate: 1, warmup_lr: 1e-5, warmup_epochs: 0, cooldown_epochs: 0}
 
 
 
