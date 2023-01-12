@@ -526,6 +526,7 @@ def main(args, config):
                 config,
                 embedding_bag_helper,
             )
+            lr_scheduler.step(epoch + warmup_steps + 1)
 
         eval_dict = evaluation(
             model_without_ddp,
@@ -600,7 +601,7 @@ def main(args, config):
                 ) as f:
                     f.write(json.dumps(log_stats) + "\n")
 
-                if merge_val_result["img_r_mean"] > best:
+                if merge_val_result["recall_val_r_mean"] > best:
                     save_obj = {
                         "model": model_without_ddp.state_dict(),
                         "optimizer": optimizer.state_dict(),
@@ -618,7 +619,6 @@ def main(args, config):
         if args.evaluate:
             break
 
-        lr_scheduler.step(epoch + warmup_steps + 1)
         torch.cuda.empty_cache()
 
     total_time = time.time() - start_time
