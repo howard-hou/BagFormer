@@ -14,7 +14,7 @@ num of image-text pairs | BagFormer
 ### Finetuned checkpoints:
 Task | BagFormer 
 :---: | :---: 
-Image-Text Retrieval (MUGE) | <a href="https://storage.googleapis.com/sfr-vision-language-research/BLIP/models/model_base_retrieval_coco.pth">Download</a>
+Image-Text Retrieval (MUGE) | <a href="https://drive.google.com/file/d/1Fwy67KA0VYyXBvcAut97iH9vxbzfuNLE/view?usp=share_link">Download</a>
 
 ### Image-Text Retrieval:
 1. Download MUGE Multimodal Retrieval dataset from the original <a herf="https://tianchi.aliyun.com/dataset/107332">website</a>, and unzip file to data directory, or modify the path in configs/config_muge.yaml.
