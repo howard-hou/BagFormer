@@ -113,3 +113,16 @@ print("text feature shape:", embedbag_feats.shape)
 print("img2text sim:", sim_i2t)  # prints: [[132.4761, 50.0424]
 print("text2img sim:", sim_t2i)  # prints: [[33.4206], [19.6727]]
 ```
+
+## Citation
+
+If you find our work useful, please consider citing BagFormer:
+
+```
+@article{hou2022bagformer,
+  title={BagFormer: Better Cross-Modal Retrieval via bag-wise interaction},
+  author={Hou, Haowen and Yan, Xiaopeng and Zhang, Yigeng and Lian, Fengzong and Kang, Zhanhui},
+  journal={arXiv preprint arXiv:2212.14322},
+  year={2022}
+}
+```
