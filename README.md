@@ -32,13 +32,13 @@ Image-Text Retrieval (MUGE) | <a href="https://drive.google.com/file/d/1Fwy67KA0
 --output_dir path-to-output </pre> 
 
 4. To compare bagwise interaction with cls_token or tokenwise interaction, run baseline:
-<pre> # cls_token baseline
+<pre> # cls_token baseline, which is the BagFormer w/o late interaction model in the paper
 python3 train_muge.py \
 --checkpoint path-to-pretrain-checkpoint \
 --interaction cls_token \
 --output_dir path-to-output
 
-# tokenwise baseline 
+# tokenwise baseline, which is the BagFormer w/o bagging layer model in the paper
 python3 train_muge.py \
 --checkpoint path-to-pretrain-checkpoint \
 --interaction tokenwise \
