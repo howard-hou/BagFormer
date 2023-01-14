@@ -20,16 +20,30 @@ Image-Text Retrieval (MUGE) | <a href="https://drive.google.com/file/d/1Fwy67KA0
 1. Download MUGE Multimodal Retrieval dataset from the original <a herf="https://tianchi.aliyun.com/dataset/107332">website</a>, and unzip file to data directory, or modify the path in configs/config_muge.yaml.
 2. To evaluate the finetuned BagFormer model on MUGE, run:
 <pre>python3 train_muge.py \
---checkpoint path-to-checkpoint \
+--checkpoint path-to-finetuned-checkpoint \
 --interaction bagwise \
 --output_dir path-to-output \
 --evaluate</pre> 
 
 3. To finetune the pre-trained checkpoint. Then run:
 <pre>python3 train_muge.py \
---checkpoint path-to-checkpoint \
+--checkpoint path-to-pretrain-checkpoint \
 --interaction bagwise \
 --output_dir path-to-output </pre> 
+
+4. To compare bagwise interaction with cls_token or tokenwise interaction, run baseline:
+<pre> # cls_token baseline
+python3 train_muge.py \
+--checkpoint path-to-pretrain-checkpoint \
+--interaction cls_token \
+--output_dir path-to-output
+
+# tokenwise baseline 
+python3 train_muge.py \
+--checkpoint path-to-pretrain-checkpoint \
+--interaction tokenwise \
+--output_dir path-to-output
+</pre>
 
 ### Calculate bag-wise similarity
 ```python
