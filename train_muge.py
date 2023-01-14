@@ -601,7 +601,7 @@ def main(args, config):
                 ) as f:
                     f.write(json.dumps(log_stats) + "\n")
 
-                if merge_val_result["recall_val_r_mean"] > best:
+                if log_stats["recall_val_r_mean"] > best:
                     save_obj = {
                         "model": model_without_ddp.state_dict(),
                         "optimizer": optimizer.state_dict(),
@@ -613,7 +613,7 @@ def main(args, config):
                         args.output_dir, "checkpoint_best.pth"
                     )
                     torch.save(save_obj, best_model_path)
-                    best = merge_val_result["img_r_mean"]
+                    best = log_stats["recall_val_r_mean"]
                     best_epoch = epoch
 
         if args.evaluate:
